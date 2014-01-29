@@ -83,21 +83,25 @@ try:
     gtk.gdk.threads_init()
 except Exception:
     sys.exit(os.system(u'gdialog --title "GoAgent GTK" --msgbox "\u8bf7\u5b89\u88c5 python-gtk2" 15 60'.encode(sys.getfilesystemencoding() or sys.getdefaultencoding(), 'replace')))
+
 try:
     import pynotify
     pynotify.init('GoAgent Notify')
 except ImportError:
     pynotify = None
+
 try:
     import appindicator
 except ImportError:
     appindicator = None
+
 try:
     import vte
 except ImportError:
     sys.exit(gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, u'请安装 python-vte').run())
 
 
+#a multithread wrapper
 def spawn_later(seconds, target, *args, **kwargs):
     def wrap(*args, **kwargs):
         import time
@@ -106,6 +110,7 @@ def spawn_later(seconds, target, *args, **kwargs):
     return thread.start_new_thread(wrap, args, kwargs)
 
 
+#write config info to new file on desktop
 def drop_desktop():
     filename = os.path.abspath(__file__)
     dirname = os.path.dirname(filename)
@@ -132,6 +137,7 @@ StartupNotify=true
 def should_visible():
     import ConfigParser
     ConfigParser.RawConfigParser.OPTCRE = re.compile(r'(?P<option>[^=\s][^=]*)\s*(?P<vi>[=])\s*(?P<value>.*)$')
+    #spawn a instance of class ConfigParser.ConfigParser
     config = ConfigParser.ConfigParser()
     config.read(['proxy.ini', 'proxy.user.ini'])
     visible = config.has_option('listen', 'visible') and config.getint('listen', 'visible')
@@ -193,7 +199,10 @@ class GoAgentGTK:
             self.trayicon.set_visible(True)
 
     def make_menu(self):
+        # generate a instance of class gtk.Menu
         menu = gtk.Menu()
+        # what's in [] is a list
+        # what's in () is a tuple
         itemlist = [(u'\u663e\u793a', self.on_show),
                     (u'\u9690\u85cf', self.on_hide),
                     (u'\u505c\u6b62', self.on_stop),
@@ -276,15 +285,19 @@ def main():
     __file__ = os.path.abspath(__file__)
     if os.path.islink(__file__):
         __file__ = getattr(os, 'readlink', lambda x: x)(__file__)
+    #change current work path
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+    ### if first time run this, do block in if statement
     if not os.path.exists('goagent-logo.png'):
         # first run and drop shortcut to desktop
         drop_desktop()
 
     window = gtk.Window()
     terminal = vte.Terminal()
+    # instantiate Class goAgentGTK, will trigger GoAgentGTK.__init__ by default
     GoAgentGTK(window, terminal)
+    # run gtk window!
     gtk.main()
 
 if __name__ == '__main__':

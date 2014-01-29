@@ -12,6 +12,8 @@ import time
 import ctypes
 import platform
 
+#### addto_startup_linux() #####################################################
+
 def addto_startup_linux():
     filename = os.path.abspath(__file__)
     dirname = os.path.dirname(filename)
@@ -36,6 +38,8 @@ Comment=GoAgent GTK Launcher
             with open(filename, 'w') as fp:
                 fp.write(DESKTOP_FILE)
            # os.chmod(filename, 0755)
+
+#### addto_startup_osx() #######################################################
 
 def addto_startup_osx():
     if os.getuid() != 0:
@@ -63,7 +67,8 @@ def addto_startup_osx():
     plistlib.writePlist(plist, filename)
     print 'write plist to %s done' % filename
     print 'Adding CA.crt to system keychain, You may need to input your password...'
-    cmd = 'sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" "%s/CA.crt"' % os.path.abspath(os.path.dirname(__file__))
+    cmd = 'sudo security add-trusted-cert -d -r trustRoot -k "/Library/Keychains/System.keychain" "%s/CA.crt"' \
+                                     % os.path.abspath(os.path.dirname(__file__))
     if os.system(cmd) != 0:
         print 'Adding CA.crt to system keychain Failed!'
         sys.exit(0)
@@ -71,13 +76,21 @@ def addto_startup_osx():
     print 'To start goagent right now, try this command: sudo launchctl load /Library/LaunchDaemons/org.goagent.macos.plist'
     print 'To checkout log file: using Console.app to locate /var/log/goagent.log'
 
+#### addto_startup_windows() ###################################################
+
 def addto_startup_windows():
     if 1 == ctypes.windll.user32.MessageBoxW(None, u'是否将goagent.exe加入到启动项？', u'GoAgent 对话框', 1):
         if 1 == ctypes.windll.user32.MessageBoxW(None, u'是否显示托盘区图标？', u'GoAgent 对话框', 1):
             pass
 
+#### addto_startup_unknown() ###################################################
+
 def addto_startup_unknown():
     print '*** error: Unknown system'
+
+# ==============================================================================
+# main()
+# ==============================================================================
 
 def main():
     addto_startup_funcs = {
