@@ -56,6 +56,8 @@ except TypeError:
     gevent.monkey.patch_all()
     sys.stderr.write('\033[31m  Warning: Please update gevent to the latest 1.0 version!\033[0m\n')
 
+# in standard lib? so no exception handler?
+
 import errno
 import binascii
 import time
@@ -101,6 +103,10 @@ except ImportError:
 HAS_PYPY = hasattr(sys, 'pypy_version_info')
 NetWorkIOError = (socket.error, ssl.SSLError, OSError) if not OpenSSL else (socket.error, ssl.SSLError, OpenSSL.SSL.Error, OSError)
 
+
+# =============================================================================
+# Class Logging
+# =============================================================================
 
 class Logging(type(sys)):
     CRITICAL = 50
@@ -180,6 +186,10 @@ class Logging(type(sys)):
 logging = sys.modules['logging'] = Logging('logging')
 
 
+# =============================================================================
+# Class LRUCache
+# =============================================================================
+
 class LRUCache(object):
     """http://pypi.python.org/pypi/lru/"""
 
@@ -210,6 +220,10 @@ class LRUCache(object):
         self.cache = {}
         self.key_order = []
 
+
+# =============================================================================
+# Class CertUtil
+# =============================================================================
 
 class CertUtil(object):
     """CertUtil module, based on mitmproxy"""
@@ -394,6 +408,9 @@ class CertUtil(object):
         if not os.path.exists(certdir):
             os.makedirs(certdir)
 
+# =============================================================================
+# Class SSLConnection
+# =============================================================================
 
 class SSLConnection(object):
 
@@ -499,6 +516,9 @@ class SSLConnection(object):
         return socket._fileobject(self, mode, bufsize, close=True)
 
 
+# =============================================================================
+# Class ProxyUtil
+# =============================================================================
 
 class ProxyUtil(object):
     """ProxyUtil module, based on urllib2"""
@@ -520,6 +540,9 @@ class ProxyUtil(object):
         sock.close()
         return listen_ip
 
+# =============================================================================
+# Class PacUtil
+# =============================================================================
 
 class PacUtil(object):
     """GoAgent Pac Util"""
@@ -736,6 +759,9 @@ class PacUtil(object):
         function = 'function %s(url, host) {\r\n%s\r\n%sreturn "%s";\r\n}' % (func_name, '\n'.join(jsLines), ' '*indent, default)
         return function
 
+# =============================================================================
+# Class DNSUtil
+# =============================================================================
 
 class DNSUtil(object):
     """
@@ -872,6 +898,9 @@ def spawn_later(seconds, target, *args, **kwargs):
         return target(*args, **kwargs)
     return __import__('thread').start_new_thread(wrap, args, kwargs)
 
+# =============================================================================
+# Class HTTPUtil
+# =============================================================================
 
 class HTTPUtil(object):
     """HTTP Request Class"""
@@ -1378,6 +1407,9 @@ class HTTPUtil(object):
                 else:
                     continue
 
+# =============================================================================
+# Class Common
+# =============================================================================
 
 class Common(object):
     """Global Config Object"""
@@ -1654,6 +1686,10 @@ except ImportError:
             return ''.join(out)
 
 
+# =============================================================================
+# Class RC4FileObject
+# =============================================================================
+
 class RC4FileObject(object):
     """fileobj for rc4"""
     def __init__(self, stream, key):
@@ -1665,6 +1701,9 @@ class RC4FileObject(object):
     def read(self, size=-1):
         return self.__cipher.encrypt(self.__stream.read(size))
 
+# =============================================================================
+# Class XORCipher
+# =============================================================================
 
 class XORCipher(object):
     """XOR Cipher Class"""
@@ -1750,6 +1789,9 @@ def gae_urlfetch(method, url, headers, payload, fetchserver, **kwargs):
             response.fp = RC4FileObject(response.fp, kwargs['password'])
     return response
 
+# =============================================================================
+# Class RangeFetch
+# =============================================================================
 
 class RangeFetch(object):
     """Range Fetch Class"""
@@ -1920,6 +1962,9 @@ class RangeFetch(object):
                 logging.exception('RangeFetch._fetchlet error:%s', e)
                 raise
 
+# =============================================================================
+# Class LocalProxyServer
+# =============================================================================
 
 class LocalProxyServer(SocketServer.ThreadingTCPServer):
     """Local Proxy Server"""
@@ -1988,6 +2033,9 @@ def expand_google_hk_iplist(domains, max_count=100):
     common.IPLIST_MAP['google_hk'] += [x[0] for x in ip_connection_time]
     logging.info('expand_google_hk_iplist end. iplist=%s', ip_connection_time)
 
+# =============================================================================
+# Class GAEProxyHandler
+# =============================================================================
 
 class GAEProxyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -2434,6 +2482,9 @@ def php_urlfetch(method, url, headers, payload, fetchserver, **kwargs):
         return response
     return response
 
+# =============================================================================
+# Class PHPProxyHandler
+# =============================================================================
 
 class PHPProxyHandler(GAEProxyHandler):
 
@@ -2539,6 +2590,9 @@ class PHPProxyHandler(GAEProxyHandler):
             if e.args[0] not in (errno.ECONNABORTED, errno.EPIPE):
                 raise
 
+# =============================================================================
+# Class PACProxyHandler
+# =============================================================================
 
 class PACProxyHandler(GAEProxyHandler):
 
@@ -2667,6 +2721,9 @@ class PACProxyHandler(GAEProxyHandler):
         else:
             GAEProxyHandler.do_METHOD_AGENT(self)
 
+# =============================================================================
+# Class DNSServer
+# =============================================================================
 
 class DNSServer(gevent.server.DatagramServer if gevent and hasattr(gevent.server, 'DatagramServer') else object):
     """DNS TCP Proxy based on gevent/dnslib"""

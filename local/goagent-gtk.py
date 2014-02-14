@@ -69,6 +69,7 @@ TI/Wjlv1JdUdNKwHcvfumFNuPQPLziD3m3DRGyBPkWsS2s/h4qcI+g/uPOcJK79rWbTv0bEy9rqZ
 tDXWvuH0qD8PponhVLu3Dv6dmGXsda2bpdGIxr6lvzy3D2CLt7HJY3a/n9r/N/sfrBt2air9qXQA
 AAAASUVORK5CYII="""
 
+# In standard lib
 import sys
 import os
 import re
@@ -76,6 +77,7 @@ import thread
 import base64
 import platform
 
+# Not in standard lib, need exception handler
 try:
     import pygtk
     pygtk.require('2.0')
@@ -100,8 +102,7 @@ try:
 except ImportError:
     sys.exit(gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, u'请安装 python-vte').run())
 
-
-#a multithread wrapper
+#### spawn_later ##############################################################
 def spawn_later(seconds, target, *args, **kwargs):
     def wrap(*args, **kwargs):
         import time
@@ -109,8 +110,7 @@ def spawn_later(seconds, target, *args, **kwargs):
         return target(*args, **kwargs)
     return thread.start_new_thread(wrap, args, kwargs)
 
-
-#write config info to new file on desktop
+#### drop_desktop #############################################################
 def drop_desktop():
     filename = os.path.abspath(__file__)
     dirname = os.path.dirname(filename)
@@ -134,10 +134,10 @@ StartupNotify=true
             os.chmod(filename, 0755)
 
 
+#### should_visible ###########################################################
 def should_visible():
     import ConfigParser
     ConfigParser.RawConfigParser.OPTCRE = re.compile(r'(?P<option>[^=\s][^=]*)\s*(?P<vi>[=])\s*(?P<value>.*)$')
-    #spawn a instance of class ConfigParser.ConfigParser
     config = ConfigParser.ConfigParser()
     config.read(['proxy.ini', 'proxy.user.ini'])
     visible = config.has_option('listen', 'visible') and config.getint('listen', 'visible')
@@ -147,6 +147,9 @@ def should_visible():
 #appindicator = None
 
 
+# =============================================================================
+# GoAgentGTK
+# =============================================================================
 class GoAgentGTK:
 
     command = ['/usr/bin/env', 'python', 'proxy.py']
@@ -248,18 +251,6 @@ class GoAgentGTK:
         self.window.show_all()
         self.window.present()
         self.terminal.feed('\r')
-
-    def on_hide(self, widget, data=None):
-        self.window.hide_all()
-
-    def on_stop(self, widget, data=None):
-        if self.childexited:
-            self.terminal.disconnect(self.childexited)
-        os.system('kill -9 %s' % self.childpid)
-
-    def on_reload(self, widget, data=None):
-        if self.childexited:
-            self.terminal.disconnect(self.childexited)
         os.system('kill -9 %s' % self.childpid)
         self.on_show(widget, data)
         self.childpid = self.terminal.fork_command(self.command[0], self.command, os.getcwd())
@@ -280,24 +271,22 @@ class GoAgentGTK:
         gtk.main_quit()
 
 
+#### mian #####################################################################
+
 def main():
     global __file__
     __file__ = os.path.abspath(__file__)
     if os.path.islink(__file__):
         __file__ = getattr(os, 'readlink', lambda x: x)(__file__)
-    #change current work path
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    ### if first time run this, do block in if statement
     if not os.path.exists('goagent-logo.png'):
         # first run and drop shortcut to desktop
         drop_desktop()
 
     window = gtk.Window()
     terminal = vte.Terminal()
-    # instantiate Class goAgentGTK, will trigger GoAgentGTK.__init__ by default
     GoAgentGTK(window, terminal)
-    # run gtk window!
     gtk.main()
 
 if __name__ == '__main__':
