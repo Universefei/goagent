@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # coding:utf-8
 # Contributor:
 #      Phus Lu        <phus.lu@gmail.com>
@@ -69,7 +69,6 @@ TI/Wjlv1JdUdNKwHcvfumFNuPQPLziD3m3DRGyBPkWsS2s/h4qcI+g/uPOcJK79rWbTv0bEy9rqZ
 tDXWvuH0qD8PponhVLu3Dv6dmGXsda2bpdGIxr6lvzy3D2CLt7HJY3a/n9r/N/sfrBt2air9qXQA
 AAAASUVORK5CYII="""
 
-# In standard lib
 import sys
 import os
 import re
@@ -77,8 +76,6 @@ import thread
 import base64
 import platform
 
-# Not in standard lib, need exception handler
-# F? what's the differences between pygtk and gtk?
 try:
     import pygtk
     pygtk.require('2.0')
@@ -86,24 +83,21 @@ try:
     gtk.gdk.threads_init()
 except Exception:
     sys.exit(os.system(u'gdialog --title "GoAgent GTK" --msgbox "\u8bf7\u5b89\u88c5 python-gtk2" 15 60'.encode(sys.getfilesystemencoding() or sys.getdefaultencoding(), 'replace')))
-
 try:
     import pynotify
     pynotify.init('GoAgent Notify')
 except ImportError:
     pynotify = None
-
 try:
     import appindicator
 except ImportError:
     appindicator = None
-
 try:
     import vte
 except ImportError:
     sys.exit(gtk.MessageDialog(None, gtk.DIALOG_MODAL, gtk.MESSAGE_ERROR, gtk.BUTTONS_OK, u'请安装 python-vte').run())
 
-#### spawn_later ##############################################################
+
 def spawn_later(seconds, target, *args, **kwargs):
     def wrap(*args, **kwargs):
         import time
@@ -111,7 +105,7 @@ def spawn_later(seconds, target, *args, **kwargs):
         return target(*args, **kwargs)
     return thread.start_new_thread(wrap, args, kwargs)
 
-#### drop_desktop #############################################################
+
 def drop_desktop():
     filename = os.path.abspath(__file__)
     dirname = os.path.dirname(filename)
@@ -135,13 +129,11 @@ StartupNotify=true
             os.chmod(filename, 0755)
 
 
-#### should_visible ###########################################################
-# ConfigParser module is used to parse microsoft ini config file
 def should_visible():
     import ConfigParser
     ConfigParser.RawConfigParser.OPTCRE = re.compile(r'(?P<option>[^=\s][^=]*)\s*(?P<vi>[=])\s*(?P<value>.*)$')
     config = ConfigParser.ConfigParser()
-    config.read(['proxy.ini', 'proxy.user.ini'])
+    config.read('proxy.ini')
     visible = config.has_option('listen', 'visible') and config.getint('listen', 'visible')
     return visible
 
@@ -149,14 +141,16 @@ def should_visible():
 #appindicator = None
 
 
-# =============================================================================
-# GoAgentGTK
-# =============================================================================
 class GoAgentGTK:
 
     command = ['/usr/bin/env', 'python', 'proxy.py']
     message = u'GoAgent已经启动，单击托盘图标可以最小化'
     fail_message = u'GoAgent启动失败，请查看控制台窗口的错误信息。'
+    #window         gtk.window()
+    #terminal       Vte.Terminal()
+    #childpid
+    #childexited
+    #trayicon
 
     def __init__(self, window, terminal):
         self.window = window
@@ -165,10 +159,8 @@ class GoAgentGTK:
         self.window.connect('delete-event',self.delete_event)
         self.terminal = terminal
 
-        for cmd in ('python2.7', 'python27', 'python2'):
-            if os.system('which %s' % cmd) == 0:
-                self.command[1] = cmd
-                break
+        if os.system('which python3') == 0:
+            self.command[1] = 'python3'
 
         self.window.add(terminal)
         self.childpid = self.terminal.fork_command(self.command[0], self.command, os.getcwd())
@@ -204,10 +196,7 @@ class GoAgentGTK:
             self.trayicon.set_visible(True)
 
     def make_menu(self):
-        # generate a instance of class gtk.Menu
         menu = gtk.Menu()
-        # what's in [] is a list
-        # what's in () is a tuple
         itemlist = [(u'\u663e\u793a', self.on_show),
                     (u'\u9690\u85cf', self.on_hide),
                     (u'\u505c\u6b62', self.on_stop),
@@ -249,10 +238,26 @@ class GoAgentGTK:
         else:
             self.show_notify(self.fail_message)
 
+    # 显示
     def on_show(self, widget, data=None):
         self.window.show_all()
         self.window.present()
         self.terminal.feed('\r')
+
+    # 隐藏
+    def on_hide(self, widget, data=None):
+        self.window.hide_all()
+
+    # 停止
+    def on_stop(self, widget, data=None):
+        if self.childexited:
+            self.terminal.disconnect(self.childexited)
+        os.system('kill -9 %s' % self.childpid)
+
+    # 重新载入
+    def on_reload(self, widget, data=None):
+        if self.childexited:
+            self.terminal.disconnect(self.childexited)
         os.system('kill -9 %s' % self.childpid)
         self.on_show(widget, data)
         self.childpid = self.terminal.fork_command(self.command[0], self.command, os.getcwd())
@@ -269,11 +274,10 @@ class GoAgentGTK:
         # 默认最小化至托盘
         return True
 
+    # 退出
     def on_quit(self, widget, data=None):
         gtk.main_quit()
 
-
-#### mian #####################################################################
 
 def main():
     global __file__
@@ -282,13 +286,12 @@ def main():
         __file__ = getattr(os, 'readlink', lambda x: x)(__file__)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    if not os.path.exists('goagent-logo.png'):
-        # first run and drop shortcut to desktop
+    if platform.dist()[0] == 'Ubuntu':
         drop_desktop()
 
     window = gtk.Window()
     terminal = vte.Terminal()
-    GoAgentGTK(window, terminal) # generate instance of class
+    GoAgentGTK(window, terminal)
     gtk.main()
 
 if __name__ == '__main__':
