@@ -12,6 +12,9 @@ import time
 import ctypes
 import platform
 
+# -----------------------------------------------------------------------------
+# Add to linux start
+# -----------------------------------------------------------------------------
 def main_linux():
     filename = os.path.abspath(__file__)
     dirname = os.path.dirname(filename)
@@ -37,6 +40,9 @@ Comment=GoAgent GTK Launcher
                 fp.write(DESKTOP_FILE)
            # os.chmod(filename, 0755)
 
+# -----------------------------------------------------------------------------
+# Add to Macintosh start
+# -----------------------------------------------------------------------------
 def main_macos():
     if os.getuid() != 0:
         print 'please use sudo run this script'
@@ -86,11 +92,17 @@ def main_macos():
     print 'To start goagent right now, try this command: sudo launchctl load /Library/LaunchDaemons/org.goagent.macos.plist'
     print 'To checkout log file: using Console.app to locate /var/log/goagent.log'
 
+# -----------------------------------------------------------------------------
+# Add to Windows start
+# -----------------------------------------------------------------------------
 def main_windows():
     if 1 == ctypes.windll.user32.MessageBoxW(None, u'是否将goagent.exe加入到启动项？', u'GoAgent 对话框', 1):
         if 1 == ctypes.windll.user32.MessageBoxW(None, u'是否显示托盘区图标？', u'GoAgent 对话框', 1):
             pass
 
+# =============================================================================
+# main
+# =============================================================================
 def main():
     if os.name == 'nt':
         main_windows()
